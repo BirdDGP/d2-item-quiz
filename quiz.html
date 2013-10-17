@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <style type="text/css">
+h4 {
+	margin: 0 0 8px;
+	color: white;
+	font-size: 18px;
+}
+
+h5 {
+	margin: 0;
+	color:white;
+	font-size: 14px;
+}
+
+  .items {
+  	background-size: 50px 38px;
+  	float: left;
+  	width: 50px;
+  	height: 38px;
+  	border: rgba(100, 100, 100, 0.9) 1px solid;
+  	border-radius: 2px;
+  	opacity: 1;
+  	margin: 0 3px;
+  }
+
+  .selected {
+  	opacity: 0.2 !important;
+  }
+
+  .questionMark {
+  	background-image: url('images/item-slot-unknown.png');
+  }
+
+  .items:hover, #recipe:hover {
+  	border: rgba(200, 200, 200, 1) 1px solid;
+  }
+
+  #combinedItem {
+  	margin-top: 50px;
+  	margin-bottom: 20px;
+  	display: inline-block;
+  	position:relative;
+  	overflow: hidden;
+  }
+
+  #materialItems {
+  	margin-bottom: 20px;
+  	display: inline-block;
+  	position:relative;
+  	overflow: hidden;
+  }
+
+  #userAnswer {
+  	margin-bottom: 20px;
+  	display: inline-block;
+  	position:relative;
+  	overflow: hidden;
+  }
+
+  #recipe {
+  	background-image: url('images/recipe_lg.png');
+  	background-size: 50px 38px;
+  	margin-bottom: 20px;
+  	margin-left: 15px;
+  	width: 50px;
+  	height: 38px;
+  	border: rgba(100, 100, 100, 0.9) 1px solid;
+  	border-radius: 2px;
+  	opacity: 1;
+  	display: inline-block;
+  }
+
+  </style>
+</head>
+<body style="background: #111;">
+	<div id="quizHolder" style="width: 664px; height: 362px; margin: 200px auto 0; background: url('images/holder.png'); background-repeat:no-repeat; display: block; position: relative; overflow: hidden; text-align: center;">
+		<div id="combinedItem">
+			<div class="items"></div>
+		</div>
+		<br>
+		<div id="materialItems">
+			<div class="items"></div>
+			<div class="items"></div>
+			<div class="items"></div>
+		</div>
+		<br>
+		<div id="userAnswer">
+			<div class="items"></div>
+			<div class="items"></div>
+			<div class="items"></div>
+		</div>
+		<div id="recipe"></div>
+		<div id="textholder">
+			<h4>Total Score: <span id="totalScore">0</span></h4>
+			<h4>Guesses Left: <span id="guessLeft">3</span></h4>
+			<h5>Solved <span id="totalCombo">0</span> in a row.
+		</div>
+	</div>
+</body>
+
+<script src="reversequiz.js"></script>
+
+
+</html>
