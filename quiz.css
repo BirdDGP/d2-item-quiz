@@ -1,0 +1,81 @@
+h4 {
+	margin: 0 0 8px;
+	color: white;
+	font-size: 18px;
+}
+
+h5 {
+	margin: 0;
+	color:white;
+	font-size: 14px;
+}
+
+  .items {
+  	background-size: 50px 38px;
+  	float: left;
+  	width: 50px;
+  	height: 38px;
+  	border: rgba(100, 100, 100, 0.9) 1px solid;
+  	border-radius: 2px;
+  	opacity: 1;
+  	margin: 0 3px;
+  }
+
+  .selected {
+  	opacity: 0.2 !important;
+  }
+
+  .questionMark {
+  	background-image: url('images/item-slot-unknown.png');
+  }
+
+  .items:hover, #recipe:hover {
+  	border: rgba(200, 200, 200, 1) 1px solid;
+  }
+
+  #combinedItem {
+  	margin-top: 50px;
+  	margin-bottom: 20px;
+  	display: inline-block;
+  	position:relative;
+  	overflow: hidden;
+  }
+
+  #materialItems {
+  	margin-bottom: 20px;
+  	display: inline-block;
+  	position:relative;
+  	overflow: hidden;
+  }
+
+  #userAnswer {
+  	margin-bottom: 20px;
+  	display: inline-block;
+  	position:relative;
+  	overflow: hidden;
+  }
+
+  #recipe {
+  	background-image: url('images/recipe_lg.png');
+  	background-size: 50px 38px;
+  	margin-bottom: 20px;
+  	margin-left: 15px;
+  	width: 50px;
+  	height: 38px;
+  	border: rgba(100, 100, 100, 0.9) 1px solid;
+  	border-radius: 2px;
+  	opacity: 1;
+  	display: inline-block;
+  }
+
+  #quizHolder {
+  	width: 664px;
+  	height: 362px;
+  	margin: 200px auto 0;
+  	background: url('images/holder.png');
+  	background-repeat:no-repeat;
+  	display: block;
+  	position: relative;
+  	overflow: hidden;
+  	text-align: center;
+  }
