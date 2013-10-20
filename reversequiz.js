@@ -19,7 +19,7 @@
 		"mystery_missile","mystery_toss","mystery_vacuum","winter_cake","winter_coco","winter_cookie","winter_greevil_chewy",
 		"winter_greevil_garbage","winter_greevil_treat","winter_ham","winter_kringle","winter_mushroom","winter_skates",
 		"winter_stocking","winter_band","greevil_whistle","greevil_whistle_toggle","halloween_rapier", "tango", "clarity"],
-
+	guessLeftColors = ['red', 'yellow', 'white'],
 	itemObj = {
 		materials: {},
 		combined: {},
@@ -161,8 +161,7 @@
 			this.correct ? showNextQuestion() : resetSelections();
 		},
 
-	};
-
+	}
 
 	var Helper = {
 		// Add element with settings for multiple properties
@@ -246,6 +245,7 @@
 		userAnswers = doc.getElementById('userAnswer').childNodes,
 		recipeSpan = doc.getElementById('recipe'),
 		guessLeftSpan = doc.getElementById('guessLeft'),
+		totalScoreSpan = doc.getElementById('totalScore'),
 		totalComboSpan = doc.getElementById('totalCombo');
 
 		// Reset user selection array and recipe in latest question.
@@ -263,8 +263,18 @@
 		totalCombo = 0;
 		totalComboSpan.innerText = totalCombo;
 		guessLeftSpan.innerText = --guessLeft;
+		guessLeftSpan.parentNode.style.color = guessLeftColors[(guessLeft - 1)] || 'white';
 
-		if (guessLeft === 0) alert('You lose!');
+		// When guess left reaches 0, trigger game over.
+		if (guessLeft === 0) {
+			totalScore = 0;
+			totalScoreSpan.innerText = totalScore;
+			guessLeft = 3;
+			guessLeftSpan.innerText = guessLeft;
+			alert('You lose!');
+			generateQuestion();
+			setupPage();
+		}
 	}
 
 	// Remove all elements.
