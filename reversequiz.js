@@ -83,7 +83,7 @@
 
 			while (i--) {
 				do {
-					randomItemName = keysArr[randomInt(0, keysArr.length - 1)];
+					randomItemName = keysArr[Helper.randomInt(0, keysArr.length - 1)];
 				} while (!isUniqueItem.call(this, randomItemName)); // Don't forget to bind
 				this.wrongItems.push(randomItemName);
 			}
@@ -162,6 +162,35 @@
 		},
 
 	};
+
+
+	var Helper = {
+		// Add element with settings for multiple properties
+		addElement: function(name, properties) {
+			var e = document.createElement(name);
+			for (var p in properties) {
+				e[p] = properties[p];
+			}
+			return e;
+		},
+
+		// Randomly generate integer between min and max number. [Inclusive]
+		randomInt: function (min, max) {
+			return Math.floor(Math.random() * (max - min + 1) + min); 
+		},
+
+		// Shuffle array elements and return new array.
+		shuffleArray: function (arr){
+			var cache, index, counter = arr.length;
+			while (counter--) {
+				index = this.randomInt(0, counter);
+				temp = arr[counter];
+				arr[counter] = arr[index];
+				arr[index] = temp;
+			}
+			return arr;
+		},
+	}
 
 	function showNextQuestion(){
 		addScore();
@@ -252,15 +281,6 @@
 		recipeDiv.className = '';
 	}
 
-	// Add element with settings for multiple properties
-	function addElement(name, properties) {
-		var e = document.createElement(name);
-		for (var p in properties) {
-			e[p] = properties[p];
-		}
-		return e;
-	}
-
 	function getImageURL(itemName) {
 		// If it's undefined, it's a recipe.
 		if (typeof itemName === 'undefined') {
@@ -305,7 +325,7 @@
 		latestQuestion.materials.length + 1 : latestQuestion.materials.length;
 
 		for (var i = 0; i < maxLength; i++) {
-			newElement = addElement('div', {className: latestQuestion.reversed ? 'items' : 'items questionMark'});
+			newElement = Helper.addElement('div', {className: latestQuestion.reversed ? 'items' : 'items questionMark'});
 			
 			if (latestQuestion.reversed) {
 				newElement.style.backgroundImage = getImageURL(latestQuestion.materials[i]);
@@ -316,7 +336,7 @@
 
 		materials.appendChild(materialsFragment);
 
-		newElement = addElement('div', {className: latestQuestion.reversed ? 'items questionMark' : 'items'});
+		newElement = Helper.addElement('div', {className: latestQuestion.reversed ? 'items questionMark' : 'items'});
 
 		if (!latestQuestion.reversed) {
 			newElement.style.backgroundImage = getImageURL(latestQuestion.itemName);
@@ -326,10 +346,10 @@
 
 		// Randomly assign wrong and correct answers.
 		answers = latestQuestion.wrongItems.concat(latestQuestion.reversed ? latestQuestion.itemName : latestQuestion.materials);
-		answers = shuffleArray(answers);
+		answers = Helper.shuffleArray(answers);
 
 		for (var key in answers) {
-			newElement = addElement('div', {className: 'items'});
+			newElement = Helper.addElement('div', {className: 'items'});
 			newElement.style.backgroundImage = getImageURL(answers[key]);
 			newElement.setAttribute(htmlDataBindingName, answers[key]);
 
@@ -388,23 +408,6 @@
 
 	}
 
-	// Randomly generate integer between min and max number. [Inclusive]
-	function randomInt(min, max) {
-		return Math.floor(Math.random() * (max - min + 1) + min); 
-	}
-
-	// Shuffle array elements and return new array.
-	function shuffleArray(arr){
-		var cache, index, counter = arr.length;
-		while (counter--) {
-			index = randomInt(0, counter);
-			temp = arr[counter];
-			arr[counter] = arr[index];
-			arr[index] = temp;
-		}
-		return arr;
-	}
-
 	// Check if the sum of components matches with the total cost. If not, recipe is required.
 	function getRecipe(compArr, totalCost){
 
@@ -434,7 +437,7 @@
 		randomItemObj = {};
 
 		keysArr = Object.keys(itemObj.combined);
-		randomItemName = keysArr[randomInt(0, keysArr.length - 1)];
+		randomItemName = keysArr[Helper.randomInt(0, keysArr.length - 1)];
 		randomItemObj = itemObj.combined[randomItemName];
 
 		questionArchive.push(
