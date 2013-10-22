@@ -1,7 +1,12 @@
 ;(function(){
 
-    var scoreAddition = 200,
-    	scoreMultiplier = 1.2,
+    var SCORE_ADDITION = 200,
+    	SCORE_MULTIPLIER = 1.2,
+    	COMBO_MESSAGE = ['First Blood!', 'Double Kill!',
+    		'Killing Spree!', 'Dominating!', 'Mega Kill!',
+    		'Unstoppable!', 'Wicked Sick!', 'Monster Kill!',
+    		'Godlike!', 'Holy Shit!'],
+    	WRONG_MESSAGE = ['Ooops', 'Nope', 'Nuh-uh', 'Nah', 'Wrong', 'Think again'],
     	totalCombo = 0,
     	totalScore = 0,
     	guessLeft = 3,
@@ -9,10 +14,7 @@
     	htmlDataBindingName = 'data-d2quizchoice',
     	imgBaseUrl = 'http://cdn.dota2.com/apps/dota2/images/quiz/',
     	imgBaseUrlLocal = 'images/',
-    	comboMsg = ['First Blood!', 'Double Kill!',
-    		'Killing Spree!', 'Dominating!', 'Mega Kill!',
-    		'Unstoppable!', 'Wicked Sick!', 'Monster Kill!',
-    		'Godlike!', 'Holy Shit!'],
+
     	// Items to be excluded from the quiz
     	excludedItems = ["quelling_blade", "gem", "diffusal_blade_2", "aegis","cheese","recipe","courier","flying_courier","tpscroll","ward_observer","ward_sentry","bottle","necronomicon_2",
 		"necronomicon_3","dagon_2","dagon_3","dagon_4","dagon_5","halloween_candy_corn","present","mystery_arrow","mystery_hook",
@@ -20,23 +22,10 @@
 		"winter_greevil_garbage","winter_greevil_treat","winter_ham","winter_kringle","winter_mushroom","winter_skates",
 		"winter_stocking","winter_band","greevil_whistle","greevil_whistle_toggle","halloween_rapier", "tango", "clarity"],
 	guessLeftColors = ['red', 'yellow', 'white'],
+
 	itemObj = {
 		materials: {},
 		combined: {},
-	},
-
-	recipeStub = {
-		"img":"recipe_lg.png",
-		"dname":"Recipe",
-		"qual":"component",
-		"desc":"A recipe to build the desired item.",
-		"cost":0,
-		"attrib":"",
-		"mc":0,
-		"cd":0,
-		"lore":"A recipe is always necessary to craft the most mighty of objects.",
-		"components":null,
-		"created":false
 	};
 
 	var Question = function(settings) {
@@ -112,6 +101,7 @@
 					break; // break out of loop
 				}
 			};
+			console.log(this);
 			return this;
 
 		},
@@ -189,12 +179,41 @@
 			}
 			return arr;
 		},
+
+		// Add prefixed event listener for CSS3 animation for all browser types.
+		prefixedEvent: function(element, type, callback) {
+			var pfx = ["webkit", "moz", "MS", "o", ""];
+			for (var p = 0; p < pfx.length; p++) {
+				if (!pfx[p]) type = type.toLowerCase();
+				element.addEventListener(pfx[p]+type, callback, false);
+			}
+		},
 	}
 
 	function showNextQuestion(){
 		addScore();
+		showMessage(true);
 		generateQuestion();
 		setupPage();
+	}
+
+	function showMessage(answerBoolean){
+		var doc = document,
+		     msgDiv = doc.getElementById('messageHolder'),
+		     msgLen = COMBO_MESSAGE.length;
+
+		     if (answerBoolean) {
+		     	msgDiv.innerHTML = COMBO_MESSAGE[totalCombo-1] || COMBO_MESSAGE[msgLen-1]; 
+		     } else {
+		     	msgDiv.innerHTML = WRONG_MESSAGE[Helper.randomInt(0, WRONG_MESSAGE.length - 1)];
+		     }
+
+		     msgDiv.className = 'startMessage';
+
+		     // this should only occur once on page load***************
+		     Helper.prefixedEvent(msgDiv, "AnimationEnd", function(e){
+		     	this.className = '';
+		     });
 	}
 
 	function addScore(){
@@ -203,7 +222,7 @@
 		totalComboSpan = doc.getElementById('totalCombo');
 
 		// Add score based on the combo rate.
-		totalScore += scoreAddition * scoreMultiplier;
+		totalScore += SCORE_ADDITION * SCORE_MULTIPLIER;
 
 		totalScoreSpan.innerText = totalScore;
 		totalComboSpan.innerText = ++totalCombo;
@@ -274,6 +293,8 @@
 			alert('You lose!');
 			generateQuestion();
 			setupPage();
+		} else {
+			showMessage(false);
 		}
 	}
 
@@ -345,7 +366,6 @@
 		}
 
 		materials.appendChild(materialsFragment);
-
 		newElement = Helper.addElement('div', {className: latestQuestion.reversed ? 'items questionMark' : 'items'});
 
 		if (!latestQuestion.reversed) {
@@ -368,12 +388,14 @@
 
 					if (newElement.className === 'items') {
 						newElement.className = 'items selected';
+						//addToBlank(newElement.getAttribute(htmlDataBindingName));
 						latestQuestion.addUserAnswer(newElement.getAttribute(htmlDataBindingName)).submitAnswer();
 					} else {
 						newElement.className = 'items';
+						//removeFromBlank(newElement.getAttribute(htmlDataBindingName));
 						latestQuestion.removeUserAnswer(newElement.getAttribute(htmlDataBindingName));
 					}
-					
+
 					console.log(latestQuestion);
 
 				};
@@ -387,14 +409,27 @@
 		// Get rid of recipe from user choice depending on the question.
 		recipeDiv.style.display = latestQuestion.reversed ? 'none' : 'inline-block';
 
-		// this should only occur once ***************
+		// this should only occur once on page load***************
 		recipeDiv.onclick = function (e) {
 			latestQuestion.userRecipe = latestQuestion.userRecipe ? false : true;
 			recipeDiv.className = (recipeDiv.className === '' ? 'selected' : '');
-			latestQuestion.submitAnswer()
+			latestQuestion.submitAnswer();
 			console.log(latestQuestion);
 		}
 
+	}
+
+	function addToBlank(itemName) {
+		// fill in question mark with item by finding appropriate item icon given from itemName string.
+		var doc = document,
+		latestQuestion = questionArchive.slice(-1)[0],
+		materials = doc.getElementById('materialItems'),
+		materialsFragment = doc.createDocumentFragment(),
+		combined = doc.getElementById('combinedItem'),
+		userAnswer = doc.getElementById('userAnswer'),
+		recipeDiv = doc.getElementById('recipe'),
+		userAnswerFragment = doc.createDocumentFragment(),
+		newElement, answers = [];
 	}
 
 	// Selectively choose items that match the following requirements
@@ -454,7 +489,7 @@
 			new Question({
 				itemName: randomItemName,
 				materials: randomItemObj.components,
-				reversed: false, // Determine the quiz type
+				reversed: true, // Determine the quiz type
 				recipe: getRecipe(randomItemObj.components, randomItemObj.cost),
 			}).createWrongItems()
 		);
