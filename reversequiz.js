@@ -1,6 +1,6 @@
 ;(function(){
 
-    var doc = document, // Document alias for convinence.
+    var doc = document, // Document alias for convenience.
     	SCORE_ADDITION = 200,
     	SCORE_MULTIPLIER = 1.2,
     	totalCombo = 0,
