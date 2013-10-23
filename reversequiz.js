@@ -1,18 +1,29 @@
 ;(function(){
 
-    var SCORE_ADDITION = 200,
+    var doc = document, // Document alias for convinence.
+    	SCORE_ADDITION = 200,
     	SCORE_MULTIPLIER = 1.2,
-    	COMBO_MESSAGE = ['First Blood!', 'Double Kill!',
-    		'Killing Spree!', 'Dominating!', 'Mega Kill!',
-    		'Unstoppable!', 'Wicked Sick!', 'Monster Kill!',
-    		'Godlike!', 'Holy Shit!'],
-    	WRONG_MESSAGE = ['Ooops', 'Nope', 'Nuh-uh', 'Nah', 'Wrong', 'Think again'],
     	totalCombo = 0,
     	totalScore = 0,
     	guessLeft = 3,
     	questionArchive = [],
+
+    	// Combo message to be shown in a notification upon submitting a correct answer consecutively.
+    	COMBO_MESSAGE = ['First Blood!', 'Double Kill!',
+    		'Killing Spree!', 'Dominating!', 'Mega Kill!',
+    		'Unstoppable!', 'Wicked Sick!', 'Monster Kill!',
+    		'Godlike!', 'Holy Shit!'],
+
+    	// Wrong message to be shown in a notification upon submitting a wrong answer.
+    	WRONG_MESSAGE = ['Ooops', 'Nope', 'Nuh-uh', 'Nah', 'Wrong', 'Think again'],
+
+    	// HTML Data Binding Attribute Name.
     	htmlDataBindingName = 'data-d2quizchoice',
+
+    	// Absolute path of image URL if the images are being loaded from Dota2 CDN.
     	imgBaseUrl = 'http://cdn.dota2.com/apps/dota2/images/quiz/',
+    	
+    	// Relative path to image directory if the images are being loaded locally.
     	imgBaseUrlLocal = 'images/',
 
     	// Items to be excluded from the quiz
@@ -21,13 +32,31 @@
 		"mystery_missile","mystery_toss","mystery_vacuum","winter_cake","winter_coco","winter_cookie","winter_greevil_chewy",
 		"winter_greevil_garbage","winter_greevil_treat","winter_ham","winter_kringle","winter_mushroom","winter_skates",
 		"winter_stocking","winter_band","greevil_whistle","greevil_whistle_toggle","halloween_rapier", "tango", "clarity"],
+
+	// Colors of the guesses left text given its number. (1 = red, 2 = yellow, 3 = white)
 	guessLeftColors = ['red', 'yellow', 'white'],
 
+	// Placeholder object for items.
 	itemObj = {
 		materials: {},
 		combined: {},
 	};
 
+	/**
+	* Constructor function for Question Class.
+	*
+	* @param {Object} settings
+	* 
+	* itemName {String} - Name of the combined item
+	* materials {Array} - Array of strings consisting name of material items to synthesize a combined item.
+	* reversed {Boolean} - Is this question reversed? (Ask user for either combined or material items?)
+	* recipe {Number} || undefined - Does this combined item require a recipe to be synthesized? If so, how much is this recipe?
+	* answerLength {Number} - Required length of user answer to trigger answer evaluation.
+	* userAnswer {Array} - Array of strings consisting name of items user selected for this question.
+	* userRecipe {Boolean} - Did user select recipe for answer?
+	* correct {Boolean} || undefined - Was this question answered correctly when the evaluation method ran last time?
+	*
+	*/
 	var Question = function(settings) {
 		this.itemName = settings.itemName,
 		this.materials = settings.materials,
@@ -40,21 +69,32 @@
 		this.correct = undefined
 	};
 
+	// Methods for Question Class.
 	Question.prototype = {
-		// Create 5 unique wrong items for users to pick.
-		// Not a single item from those 5 can't be the same as correct answer.
+		/**
+		*
+		* Create 5 unique wrong items for users to pick.
+		* All of those 5 wrong items can NOT be the same as items in the correct answer.
+		*
+		* @return {Object} <---- this
+		*
+		*/
 		createWrongItems: function() {
-			// Randomly select assembled/combined item
 			var keysArr = [], i = 5, k=0,
 			randomItemName = '';
 
-			// randomItemName: String
-			// Returns boolean.
+			/**
+			* Check if the randomly selected item name is unique. 
+			*
+			* @param {String} randomItemName
+			* @return {Boolean}
+			*
+			*/
 			var isUniqueItem = function(randomItemName){
 				// If the randomized item is already present in our question obj, repick randomized item.
 				// Check if the wrongItems array already has that item.
-				// if reversed is true, check combined item as wrong answers.
-				// if reversed is false, check component items as wrong answers.
+				// if reversed is true, compare combined item for wrong answers.
+				// if reversed is false, compare component items for wrong answers.
 				if (this.wrongItems.every(function(ele){
 					return ele !== randomItemName;
 				})){
@@ -73,24 +113,30 @@
 			while (i--) {
 				do {
 					randomItemName = keysArr[Helper.randomInt(0, keysArr.length - 1)];
-				} while (!isUniqueItem.call(this, randomItemName)); // Don't forget to bind
+				} while (!isUniqueItem.call(this, randomItemName)); // Don't forget to bind 'this'
 				this.wrongItems.push(randomItemName);
 			}
 
 			return this;
 		},
 
-		// itemName (string)
-		// Return this
-		// adds an element to this.userAnswer array.
+		/**
+		* Push given item name into the userAnswer array in this object.
+		*
+		* @param {String} itemName
+		* @return {Object} <---- this
+		*/
 		addUserAnswer: function(itemName) {
 			this.userAnswer.push(itemName);
 			return this;
 		},
 
-		// itemName (string)
-		// Return this
-		// removes an element from this.userAnswer array.
+		/**
+		* Find and remove given item name from the userAnswer array in this object.
+		*
+		* @param {String} itemName
+		* @return {Object} <---- this
+		*/
 		removeUserAnswer: function(itemName) {
 
 			var i = this.userAnswer.length
@@ -105,22 +151,32 @@
 
 		},
 
+		/**
+		* Invoke evaluateAnswer method based on length of selected items by user.
+		* If reversed, required length of answer should be one.
+		* If not, required length of answer depends on number of materials + recipe if there's any.
+		*/
 		submitAnswer: function() {
-			// Detect length of submitted user answer to invoke evaluateAnswer method.
-			// If reversed, length of answer should be one.
-			// If not, length of answer depends on number of materials + recipe if there's any.
+			// 
 			if (this.userAnswer.length + (this.userRecipe ? 1 : 0) >= this.answerLength) {
 				this.evaluateAnswer(this.userAnswer);
 			}
 		},
 
-		// userInput: Array
-		// Sets this.correct as boolean.
-		// Invoke function depending on whether the answer is right or wrong.
+
+		/**
+		* Evaluate whether the user answer stored in this object is correct or not.
+		* If correct, invoke function to show next question.
+		* If incorrect, invoke function to reset all user selections.
+		* This object's correct (boolean) will be set accordingly.
+		*
+		* @param {Array} userInput <--- this.userAnswer
+		*/
 		evaluateAnswer: function(userInput) {
 
-			console.log('evaluating...');
 			// see if all materials are present in userAnswer's array.
+			// If at least one of those item exists, then it must be true.
+			// To be used as callback function for every.
 			var checkItem = function(element) {
 				for (var i = userInput.length; i--;) {
 					if (element === userInput[i]) return true;
@@ -138,8 +194,8 @@
 				throw new Error('Expected array for evaluateAnswer, got: ' + userInput);
 			}
 
-			//If reversed is true, check combined item for answer.
-			//If reversed is false, check component items for answer.
+			//If reversed is true, compare combined item for answer.
+			//If reversed is false, compare component items for answer.
 
 			if (this.reversed) {
 				this.correct = (this.itemName === userInput[0]);
@@ -153,21 +209,38 @@
 	}
 
 	var Helper = {
-		// Add element with settings for multiple properties
+		/**
+		* Create HTML element and add multiple properties with given object.
+		*
+		* @param {String} name
+		* @param {Object} properties
+		* @return {Node}
+		*/
 		addElement: function(name, properties) {
-			var e = document.createElement(name);
+			var e = doc.createElement(name);
 			for (var p in properties) {
 				e[p] = properties[p];
 			}
 			return e;
 		},
 
-		// Randomly generate integer between min and max number. [Inclusive]
+		/**
+		* Randomly generate integer between min and max number. [Inclusive]
+		*
+		* @param {Number} min
+		* @param {Number} max
+		* @return {Number}
+		*/
 		randomInt: function (min, max) {
 			return Math.floor(Math.random() * (max - min + 1) + min); 
 		},
 
-		// Shuffle array elements and return new array.
+		/**
+		* Shuffle array values inside array and return changed array.
+		*
+		* @param {Array} arr
+		* @return {Array}
+		*/
 		shuffleArray: function (arr){
 			var cache, index, counter = arr.length;
 			while (counter--) {
@@ -179,7 +252,13 @@
 			return arr;
 		},
 
-		// Add prefixed event listener for CSS3 animation for all browser types.
+		/**
+		* Higher order function for adding all different prefixed event listener for CSS3 animation.
+		*
+		* @param {Node} element
+		* @param {string} type
+		* @param {function} callback
+		*/
 		prefixedEvent: function(element, type, callback) {
 			var pfx = ["webkit", "moz", "MS", "o", ""];
 			for (var p = 0; p < pfx.length; p++) {
@@ -196,9 +275,15 @@
 		setupPage();
 	}
 
+	/**
+	* Show notification message with CSS3 animation.
+	* If the user answer is correct, show combo message.
+	* if the user answer is false, show incorrect message.
+	*
+	* @param {answerBoolean} itemName
+	*/
 	function showMessage(answerBoolean){
-		var doc = document,
-		     msgDiv = doc.getElementById('messageHolder'),
+		var msgDiv = doc.getElementById('messageHolder'),
 		     msgLen = COMBO_MESSAGE.length;
 
 		     if (answerBoolean) {
@@ -215,9 +300,11 @@
 		     });
 	}
 
+	/**
+	* Add and display the updated total score upon submitting correct answer.
+	*/
 	function addScore(){
-		var doc = document,
-		totalScoreSpan = doc.getElementById('totalScore'),
+		var totalScoreSpan = doc.getElementById('totalScore'),
 		totalComboSpan = doc.getElementById('totalCombo');
 
 		// Add score based on the combo rate.
@@ -253,13 +340,14 @@
 		populateItemObj(item);
 		generateQuestion();
 		setupPage();
-		console.log(questionArchive);
 	}
 
-	// If the user inserts wrong answer, reset all selections.
+	/**
+	* Reset all user selections upon submitting wrong answer.
+	* If the remaining guess is 0, trigger game over.
+	*/
 	function resetSelections(){
-		var doc = document,
-		latestQuestion = questionArchive.slice(-1)[0],
+		var latestQuestion = questionArchive.slice(-1)[0],
 		userAnswers = doc.getElementById('userAnswer').childNodes,
 		recipeSpan = doc.getElementById('recipe'),
 		guessLeftSpan = doc.getElementById('guessLeft'),
@@ -274,7 +362,6 @@
 
 		// Reset UI for item selections.
 		recipeSpan.className = '';
-		console.log(userAnswers);
 
 		for (var i = 0; i < userAnswers.length; i++) {
 			userAnswers[i].className = 'items';
@@ -309,10 +396,11 @@
 		}
 	}
 
-	// Remove all elements.
+	/**
+	* Remove all children elements from specified DOMs.
+	*/
 	function removeAllChildren(){
-		var doc = document,
-		recipeDiv = doc.getElementById('recipe'),
+		var recipeDiv = doc.getElementById('recipe'),
 		eleToEmpty = [doc.getElementById('combinedItem'), doc.getElementById('materialItems'), doc.getElementById('userAnswer')];
 
 		eleToEmpty.forEach(function(ele){
@@ -323,8 +411,17 @@
 		recipeDiv.className = '';
 	}
 
+
+	/**
+	* Get image URL of the appropriate item given its itemName.
+	* By default stripURL will be false, but if it's true, return only the relative URL string excluding the background-image css format.
+	*
+	* @param {String} itemName
+	* @param {Boolean} stripURL
+	* @return {String}
+	*/
 	function getImageURL(itemName, stripURL) {
-		// by default, stripURL should be false.
+		// stripURL should be false by default.
 		if (typeof(stripURL) === 'undefined') stripURL = false;
 
 		// If it's undefined, it's a recipe.
@@ -346,14 +443,17 @@
 		
 	}
 
+	/**
+	* Setup quiz page by first removing all associated elements within quiz holder,
+	* then append all new html elements with event listener attached.
+	*/
 	function setupPage(){
 		// Retrieve the latest question generated.
-		var doc = document,
-		latestQuestion = questionArchive.slice(-1)[0],
+		var latestQuestion = questionArchive.slice(-1)[0],
 		materials = doc.getElementById('materialItems'),
 		materialsFragment = doc.createDocumentFragment(),
 		combined = doc.getElementById('combinedItem'),
-		userAnswer = doc.getElementById('userAnswer'),
+		userAnswerDiv = doc.getElementById('userAnswer'),
 		recipeDiv = doc.getElementById('recipe'),
 		userAnswerFragment = doc.createDocumentFragment(),
 		newElement, answers = [];
@@ -419,6 +519,8 @@
 						removeFromBlank(newElement.getAttribute(htmlDataBindingName));
 						latestQuestion.removeUserAnswer(newElement.getAttribute(htmlDataBindingName));
 					}
+
+					console.log(latestQuestion);
 				};
 			})(newElement); // closure for adding event listener to the elements in for loop.
 
@@ -445,10 +547,15 @@
 
 	}
 
+	/**
+	* Remove selected item icon from the user answer placeholder box by manipulating style, html data binding and class name.
+	*
+	* @param {string} itemName
+	*
+	*/
 	function removeFromBlank(itemName) {
 		// fill in question mark with item by finding appropriate item icon given from itemName string.
-		var doc = document,
-		latestQuestion = questionArchive.slice(-1)[0],
+		var latestQuestion = questionArchive.slice(-1)[0],
 		materialsDiv = doc.getElementById('materialItems'),
 		userAnswerDiv = doc.getElementById('userAnswer'),
 		recipeDiv = doc.getElementById('recipe'),
@@ -489,10 +596,15 @@
 		}
 	}
 
+	/**
+	* Add selected item icon into the user answer placeholder box by manipulating style, html data binding, and class name.
+	*
+	* @param {string} itemName
+	*
+	*/
 	function addToBlank(itemName) {
 		// fill in question mark with item by finding appropriate item icon given from itemName string.
-		var doc = document,
-		latestQuestion = questionArchive.slice(-1)[0],
+		var latestQuestion = questionArchive.slice(-1)[0],
 		materialsDiv = doc.getElementById('materialItems'),
 		combinedDiv = doc.getElementById('combinedItem'),
 		mChildren = materialsDiv.childNodes;
@@ -517,28 +629,37 @@
 		}
 	}
 
-	// Selectively choose items that match the following requirements
-	// 1. Non-Consumable Items
-	// 2. Not Event Exclusive
-	// 3. Not Upgraded Version of Items (ex. Dagon Lv 2, Necronomicon Lv 2, Diffusual Lv 2, etc) 
-
-	function populateItemObj(item) {
-
-		for (var propertyName in item.itemdata) {
+	/**
+	* Selectively choose items that match the following requirements:
+	* 1. Non-Consumable Items
+	* 2. Non-Event Exclusive Items
+	* 3. Non-Upgraded Version of Items (ex. Dagon Lv 2, Necronomicon Lv 2, Diffusual Lv 2, etc)
+	* Then sort the items by pushing them into itemObj in two different categories: combined or materials.
+	*
+	* @param {Object} items
+	*/
+	function populateItemObj(items) {
+		for (var propertyName in items.itemdata) {
 			if (excludedItems.every(function(itemName){return itemName !== propertyName})){
-				if (item.itemdata[propertyName]['qual'] !== "consumable") {
-					if (!item.itemdata[propertyName].components) {
-						itemObj.materials[propertyName] = item.itemdata[propertyName];
+				if (items.itemdata[propertyName]['qual'] !== "consumable") {
+					if (!items.itemdata[propertyName].components) {
+						itemObj.materials[propertyName] = items.itemdata[propertyName];
 					} else {
-						itemObj.combined[propertyName] = item.itemdata[propertyName];
+						itemObj.combined[propertyName] = items.itemdata[propertyName];
 					}
 				}
 			}
 		}
-
 	}
 
-	// Check if the sum of components matches with the total cost. If not, recipe is required.
+	/**
+	* Check if the sum of components matches with the total cost. 
+	* If not, it implies the remaining cost belongs to the recipe. Therefore, recipe is required.
+	*
+	* @param {Number} totalCost 
+	* @param {Array} compArr
+	* @return {Number} || undefined;
+	*/
 	function getRecipe(compArr, totalCost){
 
 		// Note that some component items themselves are combined items
@@ -558,9 +679,11 @@
 	}
 
 
-	// Generate a question and store it in the question archive.
+	/**
+	* Generate a question and push it into question archive.
+	* Then generate a wrong set of items for users to choose.
+	*/
 	function generateQuestion() {
-
 		// Randomly select assembled/combined item
 		var keysArr = [], 
 		randomItemName = '',
@@ -576,7 +699,7 @@
 				materials: randomItemObj.components,
 				reversed: false, // Determine the quiz type
 				recipe: getRecipe(randomItemObj.components, randomItemObj.cost),
-			}).createWrongItems()
+			}).createWrongItems() // Create wrong set of items and store it in question object.
 		);
 
 	}
