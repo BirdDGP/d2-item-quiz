@@ -9,5 +9,4 @@ Personal challenge to recreate [Dota 2 Quiz](http://www.dota2.com/quiz) using va
 - Record all generated questions.
 
 ### To do list
-- Item selection animation.
-- Clean up.
+- Clean up & Optimization

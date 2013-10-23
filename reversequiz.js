@@ -101,7 +101,6 @@
 					break; // break out of loop
 				}
 			};
-			console.log(this);
 			return this;
 
 		},
@@ -265,7 +264,9 @@
 		recipeSpan = doc.getElementById('recipe'),
 		guessLeftSpan = doc.getElementById('guessLeft'),
 		totalScoreSpan = doc.getElementById('totalScore'),
-		totalComboSpan = doc.getElementById('totalCombo');
+		totalComboSpan = doc.getElementById('totalCombo'),
+		materialsDiv = doc.getElementById('materialItems'),
+		combinedDiv = doc.getElementById('combinedItem');
 
 		// Reset user selection array and recipe in latest question.
 		latestQuestion.userRecipe = false;
@@ -277,6 +278,16 @@
 
 		for (var i = 0; i < userAnswers.length; i++) {
 			userAnswers[i].className = 'items';
+		}
+
+		if (latestQuestion.reversed) {
+			combinedDiv.firstChild.className = 'items questionMark';
+			combinedDiv.firstChild.style.backgroundImage = '';
+		} else {
+			for (var i = 0, l = materialsDiv.childNodes.length; i < l; i++) {
+				materialsDiv.childNodes[i].className = 'items questionMark';
+				materialsDiv.childNodes[i].style.backgroundImage = '';
+			}
 		}
 
 		totalCombo = 0;
@@ -312,10 +323,13 @@
 		recipeDiv.className = '';
 	}
 
-	function getImageURL(itemName) {
+	function getImageURL(itemName, stripURL) {
+		// by default, stripURL should be false.
+		if (typeof(stripURL) === 'undefined') stripURL = false;
+
 		// If it's undefined, it's a recipe.
 		if (typeof itemName === 'undefined') {
-			return ('url(' + imgBaseUrlLocal  + 'recipe_lg.png\)');
+			return stripURL ? imgBaseUrlLocal  + 'recipe_lg.png' : ('url(' + imgBaseUrlLocal  + 'recipe_lg.png\)');
 		}
 
 		for (var key in itemObj) {
@@ -327,7 +341,7 @@
 		if (typeof urlName === 'undefined') {
 			throw "There's no image URL for " + itemName; 
 		} else {
-			return ('url(' + imgBaseUrlLocal  + urlName + '\)');
+			return stripURL ? imgBaseUrlLocal  + urlName : ('url(' + imgBaseUrlLocal  + urlName + '\)');
 		}
 		
 	}
@@ -360,18 +374,27 @@
 			
 			if (latestQuestion.reversed) {
 				newElement.style.backgroundImage = getImageURL(latestQuestion.materials[i]);
+			} else {
+				(function(newElement){
+					newElement.onclick = function(e){
+						if (newElement.className !== 'items questionMark') {
+							latestQuestion.removeUserAnswer(newElement.getAttribute(htmlDataBindingName));
+							removeFromBlank(newElement.getAttribute(htmlDataBindingName));
+							console.log(latestQuestion);
+						}
+					}
+				})(newElement);
 			}
 
 			materialsFragment.appendChild(newElement);
 		}
-
 		materials.appendChild(materialsFragment);
-		newElement = Helper.addElement('div', {className: latestQuestion.reversed ? 'items questionMark' : 'items'});
 
+
+		newElement = Helper.addElement('div', {className: latestQuestion.reversed ? 'items questionMark' : 'items'});
 		if (!latestQuestion.reversed) {
 			newElement.style.backgroundImage = getImageURL(latestQuestion.itemName);
 		}
-
 		combined.appendChild(newElement);
 
 		// Randomly assign wrong and correct answers.
@@ -383,21 +406,19 @@
 			newElement.style.backgroundImage = getImageURL(answers[key]);
 			newElement.setAttribute(htmlDataBindingName, answers[key]);
 
+			// assign onclick event listener to each items for users to choose.
 			(function(newElement){
 				newElement.onclick = function(e){
 
 					if (newElement.className === 'items') {
 						newElement.className = 'items selected';
-						//addToBlank(newElement.getAttribute(htmlDataBindingName));
+						addToBlank(newElement.getAttribute(htmlDataBindingName));
 						latestQuestion.addUserAnswer(newElement.getAttribute(htmlDataBindingName)).submitAnswer();
 					} else {
 						newElement.className = 'items';
-						//removeFromBlank(newElement.getAttribute(htmlDataBindingName));
+						removeFromBlank(newElement.getAttribute(htmlDataBindingName));
 						latestQuestion.removeUserAnswer(newElement.getAttribute(htmlDataBindingName));
 					}
-
-					console.log(latestQuestion);
-
 				};
 			})(newElement); // closure for adding event listener to the elements in for loop.
 
@@ -412,24 +433,88 @@
 		// this should only occur once on page load***************
 		recipeDiv.onclick = function (e) {
 			latestQuestion.userRecipe = latestQuestion.userRecipe ? false : true;
-			recipeDiv.className = (recipeDiv.className === '' ? 'selected' : '');
-			latestQuestion.submitAnswer();
-			console.log(latestQuestion);
+			if (recipeDiv.className === '') {
+				recipeDiv.className = 'selected';
+				addToBlank();
+				latestQuestion.submitAnswer();
+			} else {
+				recipeDiv.className = '';
+				removeFromBlank();
+			}
 		}
 
+	}
+
+	function removeFromBlank(itemName) {
+		// fill in question mark with item by finding appropriate item icon given from itemName string.
+		var doc = document,
+		latestQuestion = questionArchive.slice(-1)[0],
+		materialsDiv = doc.getElementById('materialItems'),
+		userAnswerDiv = doc.getElementById('userAnswer'),
+		recipeDiv = doc.getElementById('recipe'),
+		mChildren = materialsDiv.childNodes,
+		uaChildren = userAnswerDiv.childNodes;
+
+		// check if the question mark icon exists
+		var isQuestionMark = function(ele) {
+			return ele.className === 'items questionMark';
+		},
+
+		deselectItem = function(itemName) {
+			if (itemName === 'recipe') {
+				//undefined itemName represents recipe.
+				if (recipeDiv.className === 'selected') {
+					recipeDiv.className = '';
+					latestQuestion.userRecipe = false;
+				}
+			} else {
+				for (var i = 0, l = uaChildren.length; i < l; i++) {
+					if (uaChildren[i].getAttribute(htmlDataBindingName) === itemName && uaChildren[i].className === 'items selected') {
+						uaChildren[i].className = 'items';
+						break;
+					}
+				}
+			}
+		}
+
+		for (var i = 0, l = mChildren.length; i < l; i++) {			
+			if (mChildren[i].getAttribute(htmlDataBindingName) === itemName) {
+				deselectItem(itemName); // doesn't need to be called if the item is clicked from selected state.
+				mChildren[i].className = 'items questionMark';
+				mChildren[i].style.backgroundImage = '';
+				mChildren[i].setAttribute(htmlDataBindingName, '');
+			// If removeFromBlank is triggered via selecting the item off from material list, manually turn the item selection off.
+				break;
+			}
+		}
 	}
 
 	function addToBlank(itemName) {
 		// fill in question mark with item by finding appropriate item icon given from itemName string.
 		var doc = document,
 		latestQuestion = questionArchive.slice(-1)[0],
-		materials = doc.getElementById('materialItems'),
-		materialsFragment = doc.createDocumentFragment(),
-		combined = doc.getElementById('combinedItem'),
-		userAnswer = doc.getElementById('userAnswer'),
-		recipeDiv = doc.getElementById('recipe'),
-		userAnswerFragment = doc.createDocumentFragment(),
-		newElement, answers = [];
+		materialsDiv = doc.getElementById('materialItems'),
+		combinedDiv = doc.getElementById('combinedItem'),
+		mChildren = materialsDiv.childNodes;
+
+		// check if the question mark icon exists
+		var isQuestionMark = function(ele) {
+			return ele.className === 'items questionMark';
+		}
+
+		if (latestQuestion.reversed) {
+			combinedDiv.firstChild.className += ' chosen'
+			combinedDiv.firstChild.style.backgroundImage = getImageURL(itemName);
+		} else {
+			for (var i = 0, l = mChildren.length; i < l; i++) {
+				if (isQuestionMark(mChildren[i])) {
+					mChildren[i].className += ' chosen';
+					mChildren[i].style.backgroundImage = getImageURL(itemName);
+					mChildren[i].setAttribute(htmlDataBindingName, (typeof itemName !== 'undefined' ? itemName : 'recipe'));
+					break;
+				}
+			}
+		}
 	}
 
 	// Selectively choose items that match the following requirements
@@ -489,7 +574,7 @@
 			new Question({
 				itemName: randomItemName,
 				materials: randomItemObj.components,
-				reversed: true, // Determine the quiz type
+				reversed: false, // Determine the quiz type
 				recipe: getRecipe(randomItemObj.components, randomItemObj.cost),
 			}).createWrongItems()
 		);
