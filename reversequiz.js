@@ -268,52 +268,6 @@
 		},
 	}
 
-	function showNextQuestion(){
-		addScore();
-		showMessage(true);
-		generateQuestion();
-		setupPage();
-	}
-
-	/**
-	* Show notification message with CSS3 animation.
-	* If the user answer is correct, show combo message.
-	* if the user answer is false, show incorrect message.
-	*
-	* @param {answerBoolean} itemName
-	*/
-	function showMessage(answerBoolean){
-		var msgDiv = doc.getElementById('messageHolder'),
-		     msgLen = COMBO_MESSAGE.length;
-
-		     if (answerBoolean) {
-		     	msgDiv.innerHTML = COMBO_MESSAGE[totalCombo-1] || COMBO_MESSAGE[msgLen-1]; 
-		     } else {
-		     	msgDiv.innerHTML = WRONG_MESSAGE[Helper.randomInt(0, WRONG_MESSAGE.length - 1)];
-		     }
-
-		     msgDiv.className = 'startMessage';
-
-		     // this should only occur once on page load***************
-		     Helper.prefixedEvent(msgDiv, "AnimationEnd", function(e){
-		     	this.className = '';
-		     });
-	}
-
-	/**
-	* Add and display the updated total score upon submitting correct answer.
-	*/
-	function addScore(){
-		var totalScoreSpan = doc.getElementById('totalScore'),
-		totalComboSpan = doc.getElementById('totalCombo');
-
-		// Add score based on the combo rate.
-		totalScore += SCORE_ADDITION * SCORE_MULTIPLIER;
-
-		totalScoreSpan.innerText = totalScore;
-		totalComboSpan.innerText = ++totalCombo;
-	}
-    
 	// Retrieve JSON of Dota2 in-game itemDB
 	function retrieveItems(s){
 		
@@ -336,10 +290,76 @@
 
 	}
 
-	function initQuiz(item){
-		populateItemObj(item);
-		generateQuestion();
-		setupPage();
+	function attachEventOnce(){
+		// Here are all DOM event listeners that should only be attached once on page load.
+		var recipeDiv = doc.getElementById('recipe');
+		
+		Helper.prefixedEvent(doc.getElementById('messageHolder'), "AnimationEnd", function(e){
+		     this.className = '';
+		});
+
+		recipeDiv.onclick = function (e) {
+			var latestQuestion = questionArchive.slice(-1)[0];
+			latestQuestion.userRecipe = !(latestQuestion.userRecipe);
+
+			if (recipeDiv.className === '') {
+				this.className = 'selected';
+				addToBlank('recipe');
+				latestQuestion.submitAnswer();
+			} else {
+				this.className = '';
+				removeFromBlank('recipe');
+			}
+		}
+	}
+
+	/**
+	* Show notification message with CSS3 animation.
+	* If the user answer is correct, show combo message.
+	* if the user answer is false, show incorrect message.
+	*
+	* @param {answerBoolean} itemName
+	*/
+	function showMessage(answerBoolean){
+		var msgDiv = doc.getElementById('messageHolder'),
+		     msgLen = COMBO_MESSAGE.length;
+
+		     if (answerBoolean) {
+		     	msgDiv.innerHTML = COMBO_MESSAGE[totalCombo-1] || COMBO_MESSAGE[msgLen-1]; 
+		     } else {
+		     	msgDiv.innerHTML = WRONG_MESSAGE[Helper.randomInt(0, WRONG_MESSAGE.length - 1)];
+		     }
+
+		     msgDiv.className = 'startMessage';		     
+	}
+
+	/**
+	* Add and display the updated total score upon submitting correct answer.
+	*/
+	function addScore(){
+		var totalScoreSpan = doc.getElementById('totalScore'),
+		totalComboSpan = doc.getElementById('totalCombo');
+
+		// Add score based on the combo rate.
+		totalScore += SCORE_ADDITION * SCORE_MULTIPLIER;
+
+		totalScoreSpan.innerText = totalScore;
+		totalComboSpan.innerText = ++totalCombo;
+	}
+
+	/**
+	* Remove all children elements from specified DOMs.
+	*/
+	function removeAllChildren(){
+		var recipeDiv = doc.getElementById('recipe'),
+		eleToEmpty = [doc.getElementById('combinedItem'), doc.getElementById('materialItems'), doc.getElementById('userAnswer')];
+
+		eleToEmpty.forEach(function(ele){
+			while (ele.firstChild) {
+				ele.removeChild(ele.firstChild);
+			}
+		});
+		recipeDiv.className = '';
 	}
 
 	/**
@@ -397,22 +417,6 @@
 	}
 
 	/**
-	* Remove all children elements from specified DOMs.
-	*/
-	function removeAllChildren(){
-		var recipeDiv = doc.getElementById('recipe'),
-		eleToEmpty = [doc.getElementById('combinedItem'), doc.getElementById('materialItems'), doc.getElementById('userAnswer')];
-
-		eleToEmpty.forEach(function(ele){
-			while (ele.firstChild) {
-				ele.removeChild(ele.firstChild);
-			}
-		});
-		recipeDiv.className = '';
-	}
-
-
-	/**
 	* Get image URL of the appropriate item given its itemName.
 	* By default stripURL will be false, but if it's true, return only the relative URL string excluding the background-image css format.
 	*
@@ -421,11 +425,13 @@
 	* @return {String}
 	*/
 	function getImageURL(itemName, stripURL) {
-		// stripURL should be false by default.
-		if (typeof(stripURL) === 'undefined') stripURL = false;
 
-		// If it's undefined, it's a recipe.
-		if (typeof itemName === 'undefined') {
+		var urlName;
+		// stripURL should be false by default.
+		if (typeof stripURL === 'undefined') stripURL = false;
+
+		// If it's a recipe.
+		if (itemName === 'recipe') {
 			return stripURL ? imgBaseUrlLocal  + 'recipe_lg.png' : ('url(' + imgBaseUrlLocal  + 'recipe_lg.png\)');
 		}
 
@@ -473,14 +479,13 @@
 			newElement = Helper.addElement('div', {className: latestQuestion.reversed ? 'items' : 'items questionMark'});
 			
 			if (latestQuestion.reversed) {
-				newElement.style.backgroundImage = getImageURL(latestQuestion.materials[i]);
+				newElement.style.backgroundImage = getImageURL(latestQuestion.materials[i] || 'recipe');
 			} else {
 				(function(newElement){
 					newElement.onclick = function(e){
 						if (newElement.className !== 'items questionMark') {
 							latestQuestion.removeUserAnswer(newElement.getAttribute(htmlDataBindingName));
 							removeFromBlank(newElement.getAttribute(htmlDataBindingName));
-							console.log(latestQuestion);
 						}
 					}
 				})(newElement);
@@ -509,7 +514,6 @@
 			// assign onclick event listener to each items for users to choose.
 			(function(newElement){
 				newElement.onclick = function(e){
-
 					if (newElement.className === 'items') {
 						newElement.className = 'items selected';
 						addToBlank(newElement.getAttribute(htmlDataBindingName));
@@ -519,8 +523,6 @@
 						removeFromBlank(newElement.getAttribute(htmlDataBindingName));
 						latestQuestion.removeUserAnswer(newElement.getAttribute(htmlDataBindingName));
 					}
-
-					console.log(latestQuestion);
 				};
 			})(newElement); // closure for adding event listener to the elements in for loop.
 
@@ -531,20 +533,39 @@
 
 		// Get rid of recipe from user choice depending on the question.
 		recipeDiv.style.display = latestQuestion.reversed ? 'none' : 'inline-block';
+	}
 
-		// this should only occur once on page load***************
-		recipeDiv.onclick = function (e) {
-			latestQuestion.userRecipe = latestQuestion.userRecipe ? false : true;
-			if (recipeDiv.className === '') {
-				recipeDiv.className = 'selected';
-				addToBlank();
-				latestQuestion.submitAnswer();
-			} else {
-				recipeDiv.className = '';
-				removeFromBlank();
-			}
+	/**
+	* Add selected item icon into the user answer placeholder box by manipulating style, html data binding, and class name.
+	*
+	* @param {string} itemName
+	*
+	*/
+	function addToBlank(itemName) {
+		// fill in question mark with item by finding appropriate item icon given from itemName string.
+		var latestQuestion = questionArchive.slice(-1)[0],
+		materialsDiv = doc.getElementById('materialItems'),
+		combinedDiv = doc.getElementById('combinedItem'),
+		mChildren = materialsDiv.childNodes;
+
+		// check if the question mark icon exists
+		var isQuestionMark = function(ele) {
+			return ele.className === 'items questionMark';
 		}
 
+		if (latestQuestion.reversed) {
+			combinedDiv.firstChild.className += ' chosen'
+			combinedDiv.firstChild.style.backgroundImage = getImageURL(itemName);
+		} else {
+			for (var i = 0, l = mChildren.length; i < l; i++) {
+				if (isQuestionMark(mChildren[i])) {
+					mChildren[i].className += ' chosen';
+					mChildren[i].style.backgroundImage = getImageURL(itemName);
+					mChildren[i].setAttribute(htmlDataBindingName, itemName);
+					break;
+				}
+			}
+		}
 	}
 
 	/**
@@ -554,6 +575,7 @@
 	*
 	*/
 	function removeFromBlank(itemName) {
+
 		// fill in question mark with item by finding appropriate item icon given from itemName string.
 		var latestQuestion = questionArchive.slice(-1)[0],
 		materialsDiv = doc.getElementById('materialItems'),
@@ -592,39 +614,6 @@
 				mChildren[i].setAttribute(htmlDataBindingName, '');
 			// If removeFromBlank is triggered via selecting the item off from material list, manually turn the item selection off.
 				break;
-			}
-		}
-	}
-
-	/**
-	* Add selected item icon into the user answer placeholder box by manipulating style, html data binding, and class name.
-	*
-	* @param {string} itemName
-	*
-	*/
-	function addToBlank(itemName) {
-		// fill in question mark with item by finding appropriate item icon given from itemName string.
-		var latestQuestion = questionArchive.slice(-1)[0],
-		materialsDiv = doc.getElementById('materialItems'),
-		combinedDiv = doc.getElementById('combinedItem'),
-		mChildren = materialsDiv.childNodes;
-
-		// check if the question mark icon exists
-		var isQuestionMark = function(ele) {
-			return ele.className === 'items questionMark';
-		}
-
-		if (latestQuestion.reversed) {
-			combinedDiv.firstChild.className += ' chosen'
-			combinedDiv.firstChild.style.backgroundImage = getImageURL(itemName);
-		} else {
-			for (var i = 0, l = mChildren.length; i < l; i++) {
-				if (isQuestionMark(mChildren[i])) {
-					mChildren[i].className += ' chosen';
-					mChildren[i].style.backgroundImage = getImageURL(itemName);
-					mChildren[i].setAttribute(htmlDataBindingName, (typeof itemName !== 'undefined' ? itemName : 'recipe'));
-					break;
-				}
 			}
 		}
 	}
@@ -697,11 +686,25 @@
 			new Question({
 				itemName: randomItemName,
 				materials: randomItemObj.components,
-				reversed: false, // Determine the quiz type
+				reversed: (Helper.randomInt(0, 1) === 0), // Determine the quiz type
 				recipe: getRecipe(randomItemObj.components, randomItemObj.cost),
 			}).createWrongItems() // Create wrong set of items and store it in question object.
 		);
 
+	}
+
+	function initQuiz(item){
+		populateItemObj(item);
+		generateQuestion();
+		setupPage();
+		attachEventOnce();
+	}
+
+	function showNextQuestion(){
+		addScore();
+		showMessage(true);
+		generateQuestion();
+		setupPage();
 	}
 
 	retrieveItems({});
