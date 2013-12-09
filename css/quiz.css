@@ -26,7 +26,7 @@ opacity: 0.2 !important;
 }
 
 .questionMark {
-	background-image: url('images/item-slot-unknown.png');
+	background-image: url('../images/item-slot-unknown.png');
 }
 
 .items:hover, #recipe:hover {
@@ -186,7 +186,7 @@ opacity: 0.2 !important;
 }
 
 #recipe {
-	background-image: url('images/recipe_lg.png');
+	background-image: url('../images/recipe_lg.png');
 	background-size: 50px 38px;
 	margin-bottom: 20px;
 	margin-left: 15px;
@@ -202,7 +202,7 @@ opacity: 0.2 !important;
 	width: 664px;
 	height: 362px;
 	margin: 200px auto 0;
-	background: url('images/holder.png');
+	background: url('../images/holder.png');
 	background-repeat:no-repeat;
 	display: block;
 	position: relative;
