@@ -1,0 +1,211 @@
+h4 {
+margin: 0 0 8px;
+color: white;
+font-size: 18px;
+}
+
+h5 {
+margin: 0;
+color:white;
+font-size: 14px;
+}
+
+.items {
+	background-size: 50px 38px;
+	float: left;
+	width: 50px;
+	height: 38px;
+	border: rgba(100, 100, 100, 0.9) 1px solid;
+	border-radius: 2px;
+	opacity: 1;
+	margin: 0 3px;
+}
+
+.selected {
+opacity: 0.2 !important;
+}
+
+.questionMark {
+	background-image: url('images/item-slot-unknown.png');
+}
+
+.items:hover, #recipe:hover {
+	border: rgba(200, 200, 200, 1) 1px solid;
+}
+
+#combinedItem {
+	margin-top: 50px;
+	margin-bottom: 20px;
+	display: inline-block;
+	position:relative;
+	overflow: hidden;
+}
+
+#messageHolder {
+  opacity: 0;
+  font-weight: bold;
+  text-align: center;
+  position: absolute;
+  cursor: default;
+  top: 240px;
+  height: 500px;
+  width: 100%;
+/*        -webkit-animation: messageAni 1200ms;
+       -moz-animation: messageAni 1200ms;
+        -ms-animation:messageAni 1200ms;
+         -o-animation: messageAni 1200ms;
+            animation: messageAni 1200ms;*/
+}
+
+.startMessage {
+      -webkit-animation: messageAni 1200ms;
+       -moz-animation: messageAni 1200ms;
+        -ms-animation:messageAni 1200ms;
+         -o-animation: messageAni 1200ms;
+            animation: messageAni 1200ms;
+}
+
+/*  -webkit-transition: top 700ms, font-size 400ms, opacity 600ms;
+  -moz-transition: top 700ms, font-size 400ms, opacity 600ms;
+  -o-transition: top 700ms, font-size 400ms, opacity 600ms;
+  transition: top 700ms, font-size 400ms, opacity 600ms;*/
+
+
+@-webkit-keyframes messageAni {
+  0% {
+    font-size: 10px;
+    opacity: 0;
+    color: white;
+  }
+  25% {
+    opacity: 1;
+    color: red;
+    font-size: 30px;
+    top: 150px;
+  }
+  85% {
+    font-size: 10px;
+    opacity: 0;
+    color: white;
+    top: 100px;
+  }
+}
+
+@-moz-keyframes messageAni {
+  0% {
+    font-size: 10px;
+    opacity: 0 !important;
+    color: white;
+  }
+  25% {
+    opacity: 1 !important;
+    color: red;
+    font-size: 30px;
+    top: 150px;
+  }
+  85% {
+    font-size: 10px;
+    opacity: 0 !important;
+    color: white;
+    top: 100px;
+  }
+}
+
+@-ms-keyframes messageAni {
+  0% {
+    font-size: 10px;
+    opacity: 0 !important;
+    color: white;
+  }
+  25% {
+    opacity: 1 !important;
+    color: red;
+    font-size: 30px;
+    top: 150px;
+  }
+  85% {
+    font-size: 10px;
+    opacity: 0 !important;
+    color: white;
+    top: 100px;
+  }
+}
+
+@-o-keyframes messageAni {
+  0% {
+    font-size: 10px;
+    opacity: 0 !important;
+    color: white;
+  }
+  25% {
+    opacity: 1 !important;
+    color: red;
+    font-size: 30px;
+    top: 150px;
+  }
+  85% {
+    font-size: 10px;
+    opacity: 0 !important;
+    color: white;
+    top: 100px;
+  }
+}
+
+@keyframes messageAni {
+  0% {
+    font-size: 10px;
+    opacity: 0 !important;
+    color: white;
+  }
+  25% {
+    opacity: 1 !important;
+    color: red;
+    font-size: 30px;
+    top: 150px;
+  }
+  85% {
+    font-size: 10px;
+    opacity: 0 !important;
+    color: white;
+    top: 100px;
+  }
+}
+
+#materialItems {
+	margin-bottom: 20px;
+	display: inline-block;
+	position:relative;
+	overflow: hidden;
+}
+
+#userAnswer {
+	margin-bottom: 20px;
+	display: inline-block;
+	position:relative;
+	overflow: hidden;
+}
+
+#recipe {
+	background-image: url('images/recipe_lg.png');
+	background-size: 50px 38px;
+	margin-bottom: 20px;
+	margin-left: 15px;
+	width: 50px;
+	height: 38px;
+	border: rgba(100, 100, 100, 0.9) 1px solid;
+	border-radius: 2px;
+	opacity: 1;
+	display: inline-block;
+}
+
+#quizHolder {
+	width: 664px;
+	height: 362px;
+	margin: 200px auto 0;
+	background: url('images/holder.png');
+	background-repeat:no-repeat;
+	display: block;
+	position: relative;
+	overflow: hidden;
+	text-align: center;
+}
